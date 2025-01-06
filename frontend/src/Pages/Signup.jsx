@@ -31,7 +31,7 @@ const Signup = () => {
           alert("An error occurred during signup");
         }
       };
-      
+      // this is the signup page
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-600">
