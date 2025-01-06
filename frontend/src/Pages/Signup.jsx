@@ -1,10 +1,11 @@
 import React from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { handleError } from '../utils';
+import { handleError, handleSuccess } from '../utils';
 
 const Signup = () => {
 
+  const navigate = useNavigate();
   const handleSignup = async (e) => {
     e.preventDefault();
 
@@ -14,30 +15,42 @@ const Signup = () => {
     }
 
     try {
-      const url = "http://localhost:8080/auth/signup"; 
+      const url = "http://localhost:8080/auth/register";
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
-      })
+        body: JSON.stringify(signUpInfo),
+      });
       const data = await response.json();
+      const { success, message, error } = data;
+      if (success) {
+        handleSuccess(message);
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
+      } else if (error) {
+        const details = error?.details[0].message;
+        handleError(details);
+      } else if (!success) {
+        handleError(message);
+      }
       console.log(data);
     } catch (error) {
-         
+
     }
 
 
-  //     if (response.ok) {
-  //       alert(data.message);
-  //     } else {
-  //       alert(data.message || "Signup failed");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error:", error);
-  //     alert("An error occurred during signup");
-  //   }
+    //   if (response.ok) {
+    //     alert(data.message);
+    //   } else {
+    //     alert(data.message || "Signup failed");
+    //   }
+    // } catch (error) {
+    //   console.error("Error:", error);
+    //   alert("An error occurred during signup");
+    // }
   };
 
   const [signUpInfo, setSignUpInfo] = useState({
@@ -88,7 +101,7 @@ const Signup = () => {
             Sign Up
           </button>
           <p className='text-center'>
-            Already have an account? <Link to="/" className='text-white'>Login</Link>
+            Already have an account? <Link to="/login" className='text-white'>Login</Link>
           </p>
         </form>
       </div>

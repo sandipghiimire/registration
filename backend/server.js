@@ -1,30 +1,36 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const AuthRouter = require('./routes/AuthRouter');
+const ProductRouter = require('./routes/ProductRouter');
 
 require('dotenv').config();
-require('./models/User');
-
-const app = express();
+require('./models/db');
 const PORT = process.env.PORT || 8080;
 
-// Middleware
-app.use(cors());
+app.get('/ping', (req, res) => {
+    res.send('PONG');
+});
+
 app.use(bodyParser.json());
+app.use(cors());
+app.use('/auth', AuthRouter);
+app.use('/products', ProductRouter);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(u => u.email === email);
+    if (email === ' ' || password === ' ') {
+        return res.status(400).json({ message: 'Bad request' });
+    }else if (user && user.password === password) {
+        return res.status(200).json({ message: 'Login success' });
+    } else {
+        return res.status(401).json({ message: 'Login failed' });
+    }
+});
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_CONN, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
 
-// Routes
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
-
-// Start Server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server is running on ${PORT}`)
+})
