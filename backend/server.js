@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
+require('dotenv').config();
+require('./models/User');
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
