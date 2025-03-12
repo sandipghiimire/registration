@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.TOKEN_SECRET!);
 
+// ✅ Function to Verify Token
 async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
@@ -18,53 +19,49 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = ['/login', '/register'].includes(path);
   const isHome = path === '/';
 
-  const token = request.cookies.get('token')?.value || 
-               request.headers.get('authorization')?.split(" ")[1];
+  // ✅ Extract token ONLY from httpOnly cookie
+  const token = request.cookies.get('authToken')?.value;
 
-  // Redirect authenticated users from public pages
+  // 🔹 Redirect authenticated users away from login/register
   if (isPublicPath && token) {
     return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
   }
 
-  // Redirect home to dashboard
+  // 🔹 Redirect `/` to `/dashboard`
   if (isHome) {
     return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
   }
 
-  // Protect private routes
+  // 🔹 Protect private routes (redirect unauthenticated users)
   if (!isPublicPath && !token) {
     return NextResponse.redirect(new URL('/login', request.nextUrl));
   }
 
-  // Admin route protection
+  // 🔹 Admin Route Protection (e.g., `/settings`)
   if (path.startsWith('/settings')) {
     if (!token) return NextResponse.redirect(new URL('/login', request.nextUrl));
 
-    try {
-      const payload = await verifyToken(token);
-
-      // Check for admin status in payload
-      if (!payload || !payload.isAdmin) {
-        return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
-      }
-
-      // Add admin flag to request headers for downstream components
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('x-is-admin', 'true');
-
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders
-        }
-      });
-    } catch (error) {
-      return NextResponse.redirect(new URL('/login', request.nextUrl));
+    const payload = await verifyToken(token);
+    
+    if (!payload || !payload.isAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
     }
+
+    // ✅ Add custom header for admin routes
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-is-admin', 'true');
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    });
   }
 
   return NextResponse.next();
 }
 
+// ✅ Define which routes should use this middleware
 export const config = {
   matcher: [
     '/',

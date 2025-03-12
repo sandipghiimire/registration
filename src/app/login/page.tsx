@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import router from "next/router";
+import  { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast"; // Make sure to import toast
 
@@ -9,6 +9,8 @@ export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    const router = useRouter();
+    
     const handleRegistration = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -20,9 +22,7 @@ export default function RegisterPage() {
         try {
             const response = await fetch(`/api/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json',},
                 body: JSON.stringify({ email, password }),
                 credentials: "include",
             });

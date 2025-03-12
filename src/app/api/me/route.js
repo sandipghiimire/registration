@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import {getDataFromToken} from "../../../helper/getDataFromToken"
+import Register from "../../lib/models/register";
+import { connectionStr } from "../../lib/db";
 
 export async function GET(req) {
-  const token = req.headers.get("cookie")?.split("authToken=")[1];
-
-  if (!token) {
-    return NextResponse.json({ error: "Not Authenticated" }, { status: 401 });
-  }
-
+    await connectionStr();
   try {
-    const decoded = jwt.verify(token, "secret_key");
-    return NextResponse.json({ user: decoded });
+    const userId = await getDataFromToken(req);
+    const user = await Register.findOne({_id: userId}).select("-password");
+    return NextResponse.json({
+        message: "User Found",
+        data: user
+    })
   } catch (error) {
-    return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
+    return NextResponse.json({error: error.message},{status: 400})
   }
 }
