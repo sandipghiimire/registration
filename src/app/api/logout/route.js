@@ -7,7 +7,7 @@ export async function GET() {
       success: true,
     });
 
-    response.cookies.delete("token");
+    response.cookies.delete("authToken");
 
     return response;
   } catch (error) {
