@@ -22,16 +22,25 @@ export async function POST(req) {
             return NextResponse.json({ message: "Invalid Credentials!" }, { status: 400 });
         }
 
-        const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.TOKEN_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ 
+            id: user._id, 
+            isAdmin: user.isAdmin 
+        }, process.env.TOKEN_SECRET, 
+        { expiresIn: "1h" });
         console.log(token);
 
-        console.log("Generate Token:", token)
-        // Send token in response body (no cookies)
-        return NextResponse.json({
-            message: "Login Successfully!!",
-            success: true,
-            token: token, // Send token in response
+
+        const response = NextResponse.json({
+            message: "Logged in successfully",
         });
+
+        response.cookies.set("authToken", token, {
+            httpOnly: true,
+            maxAge: 3600000 // 1 hour in milliseconds
+        })
+
+        return response;
+
     } catch (error) {
         console.error("API Error:", error);
         return NextResponse.json({ message: "Unable to get the data" }, { status: 500 });
