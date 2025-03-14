@@ -7,6 +7,7 @@ import { ObjectId } from 'mongodb';
 import cookie from 'cookie'; // Import the cookie library
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { jwtVerify } from "jose";
 
 export async function PATCH(req) {
     await connectionStr(); // Connect to MongoDB
@@ -84,45 +85,80 @@ export async function DELETE(req) {
     }
 }
 
-export async function GET(req, { params }) {
-    try {
-        await connectionStr();
-
-        const { id } = await params;
-
-        // Validate ID format
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json(
-                { error: "Invalid user ID format" },
-                { status: 400 }
-            );
-        }
-
-        const user = await Register.findById(id).select("-password -__v");
-
-        if (!user) {
-            return NextResponse.json(
-                { error: "User not found" },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json(
-            {
-                message: "User fetched successfully",
-                data: user,
-                success: true
-            },
-            { status: 200 }
-        );
-
-    } catch (error) {
-        return NextResponse.json(
-            { error: error.message || "Server error" },
-            { status: 500 }
-        );
-    }
+// ✅ Ensure TOKEN_SECRET is properly encoded
+const tokenSecret = process.env.TOKEN_SECRET;
+if (!tokenSecret) {
+  throw new Error("TOKEN_SECRET is not defined in environment variables!");
 }
+const JWT_SECRET = new TextEncoder().encode(tokenSecret);
+
+// ✅ Function to verify token
+async function verifyToken(token) {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload;
+  } catch (error) {
+    console.error("Token verification failed:", error.message);
+    return null;
+  }
+}
+
+// ✅ Secure GET API (Only fetch user’s own data)
+export async function GET(req, { params }) {
+  try {
+    // ✅ Extract token from httpOnly cookies
+    const token = req.cookies.get('authToken')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
+    }
+
+    // ✅ Verify JWT token
+    const user = await verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Forbidden: Invalid token" }, { status: 403 });
+    }
+
+    await connectionStr();
+
+    const { id } = await params;
+
+    // ✅ Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid user ID format" }, { status: 400 });
+    }
+    
+    // console.log("THis is my id from database:",user.id)
+    // console.log("And this is my id from the path name:", id)
+
+    // ✅ Ensure the user can only fetch their own data
+    if (user.id !== id) {
+      return NextResponse.json({ error: "Forbidden: You can only access your own data" }, { status: 403 });
+    }
+
+
+    // ✅ Fetch user data, excluding password & __v field
+    const userData = await Register.findById(id).select("-password -__v");
+
+    if (!userData) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      {
+        message: "User fetched successfully",
+        data: userData,
+        success: true
+      },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("Server error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 
 
 export async function PUT(req, { params }) {

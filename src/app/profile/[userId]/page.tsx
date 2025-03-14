@@ -82,7 +82,7 @@ export default function Profile() {
 
           console.log("Gender:", data.data.gender)
         }
-      } catch (error) {
+      } catch (error:any) {
         console.error("Fetch error:", error);
         setError(error.message);
         router.push("/login");
@@ -128,7 +128,7 @@ export default function Profile() {
       }
 
       setSuccessMessage("Profile updated successfully!");
-    } catch (error) {
+    } catch (error:any) {
       setError(error.message || "Error updating profile");
     } finally {
       setIsUpdatingProfile(false);
@@ -173,7 +173,7 @@ export default function Profile() {
         confirmPassword: ""
       });
 
-    } catch (error) {
+    } catch (error:any) {
       setError(error.message || "Error changing password");
     } finally {
       setIsChangingPassword(false);
