@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, LayoutDashboard, Building2, WalletCards, Settings, User, NotebookText } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutDashboard, Building2, WalletCards, Settings, User, NotebookText, FileText, FileBarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -26,7 +26,7 @@ export default function Sidebar({
         try {
             const res = await fetch("/api/me");
             if (!res.ok) throw new Error('Failed to fetch');
-            
+
             const dataUser = await res.json();
             setData(dataUser.data.firstName);
             setEmail(dataUser.data.email);
@@ -39,11 +39,11 @@ export default function Sidebar({
     // Navigation items configuration
     const navItems = [
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Organization", href: "/organization", icon: Building2 },
-        { name: "Broker", href: "/broker", icon: WalletCards },
-        
+        { name: "Assignment", href: "/assignment", icon: FileText },
+        { name: "Results", href: "/result", icon: FileBarChart2 },
+
         // Conditionally include Settings only for admins
-        ...(isAdmin ? [{ name: "Class", href: "/classes", icon: NotebookText } ,{ name: "Settings", href: "/settings", icon: Settings }] : [])
+        ...(isAdmin ? [{ name: "Class", href: "/classes", icon: NotebookText }, { name: "Settings", href: "/settings", icon: Settings }] : [])
     ];
 
     return (

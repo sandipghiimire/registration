@@ -10,7 +10,7 @@ interface ClassCardProps {
 
 export default function ClassCard({ id, imageUrl, studentCount, className }: ClassCardProps) {
   return (
-    <div className="group relative h-64 w-full cursor-pointer overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+    <div className="bg-slate-300 group relative h-64 w-full cursor-pointer overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
       {/* Image Section (85% height) */}
       <div className="relative h-[85%] w-full">
         <Image

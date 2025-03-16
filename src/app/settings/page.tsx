@@ -13,10 +13,16 @@ interface User {
   gender: string;
   dob: string;
   mobile: string;
+  classId: string;
+}
 
+interface Class {
+  _id: string;
+  name: string;
 }
 
 export default function UserTable() {
+  const [classes, setClasses] = useState<Class[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,8 +36,25 @@ export default function UserTable() {
     mobile: "",
     gender: "",
     dob: '',
+    classId: '',
     isAdmin: false,
   });
+
+  // Fetch Classes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch("/api/class");
+        const data = await res.json();
+        if (data.success) {
+          setClasses(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -43,9 +66,6 @@ export default function UserTable() {
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
       setUsers(data.data);
-
-      // console.log("User Data", data)
-
     } catch (err) {
       setError('Failed to load users');
       toast.error('Failed to load users');
@@ -61,12 +81,11 @@ export default function UserTable() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ isAdmin }), // Send the isAdmin value in the body
+        body: JSON.stringify({ isAdmin }),
       });
 
       if (!response.ok) throw new Error('Failed to update role');
 
-      // Update the state with the new role
       setUsers(users.map(user =>
         user._id === userId ? { ...user, isAdmin } : user
       ));
@@ -96,24 +115,40 @@ export default function UserTable() {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const userData = { 
+        ...newUser,
+        classId: newUser.isAdmin ? '' : newUser.classId
+      };
+      
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify(userData),
       });
 
       if (!response.ok) throw new Error('Failed to create user');
 
       await fetchUsers();
       setIsModalOpen(false);
-      setNewUser({ firstName: '', middleName: '', dob: '', gender: '', lastName: '', mobile: '', email: '', password: '', isAdmin: false });
+      setNewUser({ 
+        firstName: '', 
+        middleName: '', 
+        dob: '', 
+        gender: '', 
+        lastName: '', 
+        mobile: '', 
+        email: '', 
+        password: '',
+        classId: '',
+        isAdmin: false 
+      });
       toast.success('User created successfully');
     } catch (error) {
       toast.error('Failed to create user');
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewUser(prev => ({
       ...prev,
@@ -169,19 +204,27 @@ export default function UserTable() {
             ) : (
               users.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-800">{user.firstName}</td>
+                  <td className="px-6 py-4 text-gray-800">{`${user.firstName} ${user.lastName}`}</td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-sm ${user.isAdmin ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{user.isAdmin ? 'Teacher' : 'Student'}</span>
+                    <span className={`px-2 py-1 rounded-full text-sm ${user.isAdmin ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                      {user.isAdmin ? 'Admin' : 'Student'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-gray-600">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => updateRole(user._id, !user.isAdmin)} className="text-blue-600 hover:text-blue-800 transition-colors">
-                      {user.isAdmin ? 'Make Student' : 'Make Teacher'}
+                    <button 
+                      onClick={() => updateRole(user._id, !user.isAdmin)} 
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      {user.isAdmin ? 'Make Student' : 'Make Admin'}
                     </button>
-                    <button onClick={() => deleteUser(user._id)} className="text-red-600 hover:text-red-800 transition-colors">
+                    <button 
+                      onClick={() => deleteUser(user._id)} 
+                      className="text-red-600 hover:text-red-800 transition-colors"
+                    >
                       Delete
                     </button>
                   </td>
@@ -192,7 +235,7 @@ export default function UserTable() {
         </table>
       </div>
 
-      {/* Modal for creating a new user */}
+      {/* New User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[550px]">
@@ -246,6 +289,26 @@ export default function UserTable() {
                   />
                 </div>
 
+                {!newUser.isAdmin && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700">Class</label>
+                    <select 
+                      name="classId" 
+                      value={newUser.classId} 
+                      onChange={handleInputChange} 
+                      className="w-full border rounded p-2"
+                      required={!newUser.isAdmin}
+                    >
+                      <option value="" disabled>Select Class</option>
+                      {classes.map((cls) => (
+                        <option key={cls._id} value={cls._id}>
+                          {cls.name}
+                        </option>
+                      ))}
+                    </select> 
+                  </div>
+                )}
+
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">Password</label>
                   <input
@@ -298,14 +361,17 @@ export default function UserTable() {
                   </select>
                 </div>
 
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">Admin</label>
                   <input
                     type="checkbox"
                     name="isAdmin"
                     checked={newUser.isAdmin}
-                    onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })}
+                    onChange={(e) => setNewUser({ 
+                      ...newUser, 
+                      isAdmin: e.target.checked,
+                      classId: e.target.checked ? '' : newUser.classId
+                    })}
                     className="h-4 w-4"
                   />
                 </div>
@@ -326,7 +392,6 @@ export default function UserTable() {
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}
