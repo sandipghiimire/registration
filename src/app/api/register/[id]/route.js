@@ -8,6 +8,7 @@ import cookie from 'cookie'; // Import the cookie library
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { jwtVerify } from "jose";
+import Class from "../../../lib/models/class";
 
 export async function PATCH(req) {
     await connectionStr(); // Connect to MongoDB
@@ -68,22 +69,44 @@ export async function DELETE(req) {
 
     try {
         const url = new URL(req.url);
-        const id = url.pathname.split('/').pop(); // id URL बाट लिने
+        const id = url.pathname.split('/').pop(); // ID extract गर्ने
+        
+        console.log("Request URL:", req.url);
+        console.log("Extracted ID:", id);
 
         if (!id) {
             return NextResponse.json({ error: "ID is required" }, { status: 400 });
         }
 
-        const user = await Register.findByIdAndDelete(id);
+        // 🔍 User खोज्ने
+        const user = await Register.findById(id);
+        console.log("User Found:", user);
+
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
+        // 🛑 Student हो भने Class बाट पनि हटाउने
+        if (!user.isAdmin) {
+            const updatedClass = await Class.updateMany(
+                { students: id },
+                { $pull: { students: id } }
+            );
+            console.log("Updated Class:", updatedClass);
+        }
+
+        // ❌ User Delete गर्ने
+        const deletedUser = await Register.findByIdAndDelete(id);
+        console.log("Deleted User:", deletedUser);
+
         return NextResponse.json({ message: "User deleted successfully" }, { status: 200 });
+
     } catch (error) {
+        console.error("Error in DELETE:", error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
 
 // ✅ Ensure TOKEN_SECRET is properly encoded
 const tokenSecret = process.env.TOKEN_SECRET;

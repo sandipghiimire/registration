@@ -52,7 +52,7 @@ export default function ClassPage() {
       const values = Array.from(e.target.selectedOptions, (option) => option.value);
       setForm({ ...form, subjects: values });
     } else {
-      setForm({ ...form, [name]: value });
+      setForm({ ...form, [name]: value }); 
     }
   };
 
@@ -135,16 +135,6 @@ export default function ClassPage() {
                 <input type="text" name="name" value={form.name} onChange={handleChange} className="w-full border rounded p-2" required />
               </div>
               <div>
-                <label className="block font-medium">Subjects</label>
-                <select name="subjects" multiple value={form.subjects} onChange={handleChange} className="w-full border rounded p-2" required>
-                  {subjects.map((subj: any) => (
-                    <option key={subj._id} value={subj._id}>
-                      {subj.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
                 <label className="block font-medium">Image</label>
                 <input type="file" name="image" accept="image/*" onChange={handleChange} className="w-full border rounded p-2" required />
               </div>
@@ -211,7 +201,7 @@ export default function ClassPage() {
               <p className="text-gray-600">
                 Subjects: {cls.subjects && cls.subjects.length > 0 ? cls.subjects.map((subj: any) => subj.name).join(", ") : "No subjects assigned"}
               </p>
-              <p className="text-gray-500">Students: {Math.floor(Math.random() * 30) + 10}</p>
+              <p className="text-gray-500">Students: {cls.students.length}</p>
             </div>
           </Card>
         ))}

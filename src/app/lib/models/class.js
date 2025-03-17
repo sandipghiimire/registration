@@ -9,12 +9,14 @@ const classSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  subjects: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Subject", // Ensure this is "Subject"
-    },
-  ],
+  subjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+  }],
+  students: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Register",
+  }]
 });
 
 const Class = mongoose.models.Class || mongoose.model("Class", classSchema);

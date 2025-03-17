@@ -57,6 +57,25 @@ export async function middleware(request: NextRequest) {
       }
     });
   }
+  if (path.startsWith('/classes')) {
+    if (!token) return NextResponse.redirect(new URL('/login', request.nextUrl));
+
+    const payload = await verifyToken(token);
+    
+    if (!payload || !payload.isAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
+    }
+
+    // ✅ Add custom header for admin routes
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-is-admin', 'true');
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    });
+  }
 
   return NextResponse.next();
 }

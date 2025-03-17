@@ -1,11 +1,13 @@
 'use client';
 
+import { NextResponse } from 'next/server';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface User {
   _id: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   email: string;
   isAdmin: boolean;
@@ -32,6 +34,7 @@ export default function UserTable() {
     middleName: '',
     email: '',
     password: '',
+    confirmPassword: '',
     lastName: "",
     mobile: "",
     gender: "",
@@ -115,36 +118,44 @@ export default function UserTable() {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userData = { 
+      const userData = {
         ...newUser,
-        classId: newUser.isAdmin ? '' : newUser.classId
+        classId: newUser.isAdmin ? undefined : newUser.classId
       };
-      
-      const response = await fetch('/api/register', {
+
+      if (newUser.password !== newUser.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+
+      const response = await fetch('http://localhost:3000/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
-      if (!response.ok) throw new Error('Failed to create user');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to create user');
 
       await fetchUsers();
       setIsModalOpen(false);
-      setNewUser({ 
-        firstName: '', 
-        middleName: '', 
-        dob: '', 
-        gender: '', 
-        lastName: '', 
-        mobile: '', 
-        email: '', 
+      setNewUser({
+        firstName: '',
+        middleName: '',
+        dob: '',
+        gender: '',
+        lastName: '',
+        mobile: '',
+        email: '',
         password: '',
+        confirmPassword: '',
         classId: '',
-        isAdmin: false 
+        isAdmin: false
       });
       toast.success('User created successfully');
     } catch (error) {
-      toast.error('Failed to create user');
+      console.error('Creation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create user');
+      return NextResponse.json({ error: error });
     }
   };
 
@@ -215,14 +226,14 @@ export default function UserTable() {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button 
-                      onClick={() => updateRole(user._id, !user.isAdmin)} 
+                    <button
+                      onClick={() => updateRole(user._id, !user.isAdmin)}
                       className="text-blue-600 hover:text-blue-800 transition-colors"
                     >
                       {user.isAdmin ? 'Make Student' : 'Make Admin'}
                     </button>
-                    <button 
-                      onClick={() => deleteUser(user._id)} 
+                    <button
+                      onClick={() => deleteUser(user._id)}
                       className="text-red-600 hover:text-red-800 transition-colors"
                     >
                       Delete
@@ -292,11 +303,11 @@ export default function UserTable() {
                 {!newUser.isAdmin && (
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700">Class</label>
-                    <select 
-                      name="classId" 
-                      value={newUser.classId} 
-                      onChange={handleInputChange} 
-                      className="w-full border rounded p-2"
+                    <select
+                      name="classId"
+                      value={newUser.classId}
+                      onChange={handleInputChange}
+                      className="w-full border rounded p-2 text-black"
                       required={!newUser.isAdmin}
                     >
                       <option value="" disabled>Select Class</option>
@@ -305,7 +316,7 @@ export default function UserTable() {
                           {cls.name}
                         </option>
                       ))}
-                    </select> 
+                    </select>
                   </div>
                 )}
 
@@ -315,6 +326,18 @@ export default function UserTable() {
                     type="password"
                     name="password"
                     value={newUser.password}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border rounded-md text-black"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={newUser.confirmPassword}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border rounded-md text-black"
                     required
@@ -340,8 +363,12 @@ export default function UserTable() {
                     name="mobile"
                     value={newUser.mobile}
                     onChange={handleInputChange}
+                    onInput={(e) => {  // Add this handler
+                      e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '').slice(0, 10);
+                    }}
                     className="w-full px-4 py-2 border rounded-md text-black"
                     required
+                    pattern="[0-9]{10}"
                   />
                 </div>
 
@@ -349,10 +376,10 @@ export default function UserTable() {
                   <label className="block text-sm font-medium text-gray-700">Gender</label>
                   <select
                     name="gender"
-                    value={newUser.gender}
+                    value={newUser.gender}  // ✅ Corrected
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded-md text-black"
-                    required
+                    className="w-full border rounded p-2 text-black"
+                    required={!newUser.isAdmin}
                   >
                     <option value="" disabled>-- Select Gender --</option>
                     <option value="male">Male</option>
@@ -367,8 +394,8 @@ export default function UserTable() {
                     type="checkbox"
                     name="isAdmin"
                     checked={newUser.isAdmin}
-                    onChange={(e) => setNewUser({ 
-                      ...newUser, 
+                    onChange={(e) => setNewUser({
+                      ...newUser,
                       isAdmin: e.target.checked,
                       classId: e.target.checked ? '' : newUser.classId
                     })}

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { connectionStr } from "../../lib/db";
 import Class from "../../lib/models/class";
 
+import mongoose from "mongoose";
+
 export async function POST(req) {
     try {
         await connectionStr();
@@ -20,10 +22,10 @@ export async function POST(req) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
 
-        const subCode = await Subject.findById(code);
+        // **Validate if code exists in Subject model**
+        const subCode = await Subject.findOne({ code }); // ✅ Find by code instead of ObjectId
         if (subCode) {
-            return NextResponse.json({ error: "Subject code already Exist!" }, { status: 404 });
-
+            return NextResponse.json({ error: "Subject code already exists!" }, { status: 400 });
         }
 
         // Create new subject
@@ -31,7 +33,7 @@ export async function POST(req) {
             name,
             code,
             creditHour,
-            classes: [classId], // Store class ID (change from `class` to `classes` here)
+            classes: [classId], // Store class ID
         });
 
         await newSubject.save();
@@ -48,6 +50,7 @@ export async function POST(req) {
         return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
 }
+
 
 
 export async function GET(req) {

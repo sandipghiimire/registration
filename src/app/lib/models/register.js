@@ -1,48 +1,110 @@
-import mongoose from 'mongoose';
+// import mongoose from 'mongoose';
 
-const registerSchema = new mongoose.Schema ({
-    firstName : {
+// const registerSchema = new mongoose.Schema({
+//     firstName: {
+//         type: String,
+//         required: true
+//     },
+//     middleName: {
+//         type: String,
+//         required: false
+//     },
+//     lastName: {
+//         type: String,
+//         required: true
+//     },
+//     gender: {
+//         type: String,
+//         required: true
+//     },
+//     dob: {
+//         type: Date,
+//         required: true
+//     },
+//     email: {
+//         type: String,
+//         required: true
+//     },
+//     mobile: {
+//         type: Number,
+//         required: true
+//     },
+//     password: {
+//         type: String,
+//         required: true
+//     },
+//     confirmPassword: {
+//         type: String,
+//         required: false
+//     },
+//     isAdmin: {
+//         type: Boolean,
+//         default: false,
+//     },
+//     classes: [
+//         {
+//             type: mongoose.Schema.Types.ObjectId,
+//             ref: "Class", // ✅ Reference to Class model
+//         },
+//     ],
+//     createdAt: String,
+// })
+
+// const Register = mongoose.models.registers || mongoose.model('registers', registerSchema);
+
+// export default Register;
+
+import mongoose from "mongoose";
+
+const registerSchema = new mongoose.Schema({
+    firstName: {
         type: String,
         required: true
     },
-    middleName : {
+    middleName: {
         type: String,
         required: false
     },
-    lastName : {
+    lastName: {
         type: String,
         required: true
     },
-    gender : {
+    gender: {
         type: String,
         required: true
     },
-    dob : {
+    dob: {
         type: Date,
         required: true
     },
-    email : {
+    email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
-    mobile : {
+    mobile: {
         type: Number,
         required: true
     },
-    password : {
+    password: {
         type: String,
         required: true
     },
-    confirmPassword : {
-        type: String,
-        required: false
+    isAdmin: {
+        type: Boolean,
+        default: false
     },
-    isAdmin :{
-        type : Boolean,
-        default : false,
+    classes: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Class", // ✅ Correct reference to Class model
+        },
+    ],
+    createdAt: {
+        type: Date,
+        default: Date.now
     },
-    createdAt:String,
-})
+});
 
 const Register = mongoose.models.registers || mongoose.model('registers', registerSchema);
 
